@@ -1,134 +1,97 @@
-import { useEffect, useState, type FormEvent } from 'react'
-import { createTask, deleteTask, listTasks, updateTask, type Task } from './api'
+import { useEffect, useState } from 'react'
+import Tasks from './Tasks'
+import AlertsPage from './monitor/AlertsPage'
+import MapPage from './monitor/MapPage'
+import MarketPage from './monitor/MarketPage'
+import Overview from './monitor/Overview'
+import RulesPage from './monitor/RulesPage'
+import SeriesPage from './monitor/SeriesPage'
+import { listAlerts } from './monitor/api'
 import './App.css'
 
-function App() {
-  const [tasks, setTasks] = useState<Task[]>([])
-  const [title, setTitle] = useState('')
-  const [editingId, setEditingId] = useState<number | null>(null)
-  const [editingTitle, setEditingTitle] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+const TABS = [
+  { id: 'overview', label: 'Resumen' },
+  { id: 'series', label: 'Series' },
+  { id: 'alerts', label: 'Alertas' },
+  { id: 'rules', label: 'Reglas' },
+  { id: 'market', label: 'Mercado' },
+  { id: 'map', label: 'Mapa' },
+  { id: 'tasks', label: 'Tareas' },
+] as const
 
-  const run = async (action: () => Promise<void>) => {
-    setError(null)
-    try {
-      await action()
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
-    }
-  }
+export type TabId = (typeof TABS)[number]['id']
+
+export interface Navigate {
+  /** `id` is the tab's subject: a series code, or a province code for the map. */
+  (tab: TabId, params?: { id?: string }): void
+}
+
+const readHash = (): { tab: TabId; id?: string } => {
+  const [tab, id] = window.location.hash.slice(1).split('/')
+  const known = TABS.find((t) => t.id === tab)
+  return { tab: known ? known.id : 'overview', id: id ? decodeURIComponent(id) : undefined }
+}
+
+function App() {
+  const [route, setRoute] = useState(readHash)
+  const [openAlerts, setOpenAlerts] = useState<number | null>(null)
 
   useEffect(() => {
-    run(async () => setTasks(await listTasks())).finally(() => setLoading(false))
+    const onHash = () => setRoute(readHash())
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
   }, [])
 
-  const handleCreate = (e: FormEvent) => {
-    e.preventDefault()
-    if (!title.trim()) return
-    run(async () => {
-      const task = await createTask(title)
-      setTasks((prev) => [task, ...prev])
-      setTitle('')
-    })
+  const refreshAlertCount = () =>
+    listAlerts('OPEN')
+      .then((a) => setOpenAlerts(a.length))
+      .catch(() => setOpenAlerts(null))
+
+  useEffect(() => {
+    refreshAlertCount()
+  }, [route.tab])
+
+  const navigate: Navigate = (tab, params) => {
+    window.location.assign(`#${params?.id ? `${tab}/${encodeURIComponent(params.id)}` : tab}`)
   }
-
-  const replace = (task: Task) =>
-    setTasks((prev) => prev.map((t) => (t.id === task.id ? task : t)))
-
-  const handleToggle = (task: Task) =>
-    run(async () => replace(await updateTask({ ...task, done: !task.done })))
-
-  const handleSaveEdit = (task: Task) => {
-    if (!editingTitle.trim()) return
-    run(async () => {
-      replace(await updateTask({ ...task, title: editingTitle }))
-      setEditingId(null)
-    })
-  }
-
-  const handleDelete = (id: number) =>
-    run(async () => {
-      await deleteTask(id)
-      setTasks((prev) => prev.filter((t) => t.id !== id))
-    })
-
-  const pending = tasks.filter((t) => !t.done).length
 
   return (
-    <main className="app">
-      <h1>Tareas</h1>
-      <p className="subtitle">
-        {loading ? 'Cargando…' : `${pending} pendiente${pending === 1 ? '' : 's'} de ${tasks.length}`}
-      </p>
+    <div className="shell">
+      <header className="topbar">
+        <div className="brand">
+          <span className="logo" aria-hidden="true">◆</span>
+          <div>
+            <strong>Vida Monitor</strong>
+            <span className="muted">Datos públicos y alertas para seguros de vida</span>
+          </div>
+        </div>
+        <nav className="tabs" aria-label="Secciones">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              className={route.tab === t.id ? 'tab active' : 'tab'}
+              aria-current={route.tab === t.id ? 'page' : undefined}
+              onClick={() => navigate(t.id)}
+            >
+              {t.label}
+              {t.id === 'alerts' && openAlerts ? <span className="count">{openAlerts}</span> : null}
+            </button>
+          ))}
+        </nav>
+      </header>
 
-      <form className="new-task" onSubmit={handleCreate}>
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="¿Qué hay que hacer?"
-          maxLength={200}
-          aria-label="Nueva tarea"
-        />
-        <button type="submit" disabled={!title.trim()}>
-          Añadir
-        </button>
-      </form>
-
-      {error && <p className="error">{error}</p>}
-
-      <ul className="tasks">
-        {tasks.map((task) => (
-          <li key={task.id} className={task.done ? 'done' : ''}>
-            <input
-              type="checkbox"
-              checked={task.done}
-              onChange={() => handleToggle(task)}
-              aria-label={`Completar ${task.title}`}
-            />
-            {editingId === task.id ? (
-              <form
-                className="edit"
-                onSubmit={(e) => {
-                  e.preventDefault()
-                  handleSaveEdit(task)
-                }}
-              >
-                <input
-                  value={editingTitle}
-                  onChange={(e) => setEditingTitle(e.target.value)}
-                  maxLength={200}
-                  autoFocus
-                  aria-label="Editar tarea"
-                />
-                <button type="submit">Guardar</button>
-                <button type="button" className="secondary" onClick={() => setEditingId(null)}>
-                  Cancelar
-                </button>
-              </form>
-            ) : (
-              <>
-                <span className="title">{task.title}</span>
-                <button
-                  className="secondary"
-                  onClick={() => {
-                    setEditingId(task.id)
-                    setEditingTitle(task.title)
-                  }}
-                >
-                  Editar
-                </button>
-                <button className="danger" onClick={() => handleDelete(task.id)}>
-                  Borrar
-                </button>
-              </>
-            )}
-          </li>
-        ))}
-      </ul>
-
-      {!loading && tasks.length === 0 && <p className="empty">No hay tareas todavía.</p>}
-    </main>
+      <main className="content">
+        {route.tab === 'overview' && <Overview navigate={navigate} />}
+        {route.tab === 'series' && <SeriesPage selected={route.id} navigate={navigate} />}
+        {route.tab === 'alerts' && <AlertsPage navigate={navigate} onChange={refreshAlertCount} />}
+        {route.tab === 'rules' && <RulesPage presetSeries={route.id} onChange={refreshAlertCount} />}
+        {route.tab === 'market' && <MarketPage navigate={navigate} />}
+        {route.tab === 'map' && (
+          <MapPage key={route.id} initialProvince={route.id ? Number(route.id) : undefined} />
+        )}
+        {route.tab === 'tasks' && <Tasks />}
+      </main>
+    </div>
   )
 }
 

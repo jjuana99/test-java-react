@@ -2,3 +2,9 @@
 firebase-debug.log
 .vscode/
 .idea/
+
+# Data never goes to the repository
+Data/
+backend/data/
+*.duckdb
+*.duckdb.wal
