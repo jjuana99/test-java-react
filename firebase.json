@@ -1,13 +1,31 @@
 {
   "hosting": {
     "public": "frontend/dist",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
     "rewrites": [
       {
         "source": "/api/**",
-        "run": { "serviceId": "tasks-api", "region": "europe-west1" }
+        "run": {
+          "serviceId": "tasks-api",
+          "region": "europe-west1"
+        }
       },
-      { "source": "**", "destination": "/index.html" }
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
     ]
+  },
+  "auth": {
+    "providers": {
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "Vida Monitor",
+        "supportEmail": "jorgejuanarandilla@gmail.com"
+      }
+    }
   }
 }

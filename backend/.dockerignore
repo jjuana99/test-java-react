@@ -1,3 +1,7 @@
 target/
 .idea/
 *.iml
+data/
+*.duckdb
+*.duckdb.wal
+*.mv.db

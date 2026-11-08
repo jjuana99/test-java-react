@@ -1,3 +1,4 @@
+import { authFetch } from '../auth/firebase'
 import type { FeatureCollection, Geometry } from 'geojson'
 
 export type RunStatus = 'RUNNING' | 'SUCCESS' | 'FAILED'
@@ -95,9 +96,9 @@ export interface ProvinceMarket {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`/api${path}`, {
-    headers: { 'Content-Type': 'application/json' },
+  const res = await authFetch(`/api${path}`, {
     ...init,
+    headers: { 'Content-Type': 'application/json' },
   })
   if (!res.ok) {
     let detail = ''

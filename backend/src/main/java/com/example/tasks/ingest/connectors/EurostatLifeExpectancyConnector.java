@@ -70,7 +70,69 @@ public class EurostatLifeExpectancyConnector implements DataConnector {
 			warehouse.replacePoints(q.code(), parse(mapper.readTree(json)));
 			infos.add(new SeriesInfo(q.code(), q.name(), "años", "anual", "Eurostat demo_mlexpec, ambos sexos."));
 		}
+		loadLifeTable();
 		return infos;
+	}
+
+	static final int MIN_AGE = 40;
+
+	static final int MAX_AGE = 85;
+
+	/** One cell of the life-expectancy table: remaining years at {@code age}. */
+	record LifeExpectancy(String sex, int age, int year, double value) {
+	}
+
+	/**
+	 * Lands the Spanish life-expectancy table by sex and single age (40-85) for recent years
+	 * as {@code life_expectancy}, used by the retirement planner.
+	 */
+	private void loadLifeTable() throws Exception {
+		StringBuilder ages = new StringBuilder();
+		for (int a = MIN_AGE; a < MAX_AGE; a++) {
+			ages.append("&age=Y").append(a);
+		}
+		ages.append("&age=Y_GE85");
+		List<LifeExpectancy> rows = new ArrayList<>();
+		for (String sex : List.of("F", "M", "T")) {
+			String url = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/demo_mlexpec?geo=ES"
+					+ "&sinceTimePeriod=2015&lang=EN&sex=" + sex + ages;
+			rows.addAll(parseByAge(sex, mapper.readTree(http.getString(url))));
+		}
+		warehouse.inTransaction(c -> {
+			try (var st = c.createStatement()) {
+				st.execute("CREATE OR REPLACE TABLE life_expectancy "
+						+ "(geo VARCHAR, sex VARCHAR, age INTEGER, year INTEGER, value DOUBLE)");
+			}
+			try (var ps = c.prepareStatement("INSERT INTO life_expectancy VALUES ('ES', ?, ?, ?, ?)")) {
+				for (LifeExpectancy r : rows) {
+					ps.setString(1, r.sex());
+					ps.setInt(2, r.age());
+					ps.setInt(3, r.year());
+					ps.setDouble(4, r.value());
+					ps.addBatch();
+				}
+				ps.executeBatch();
+			}
+		});
+	}
+
+	/** Parses a JSON-stat dataset whose only multi-valued dimensions are age and time (age before time). */
+	static List<LifeExpectancy> parseByAge(String sex, JsonNode dataset) {
+		JsonNode ageIndex = dataset.path("dimension").path("age").path("category").path("index");
+		JsonNode timeIndex = dataset.path("dimension").path("time").path("category").path("index");
+		JsonNode values = dataset.path("value");
+		int timeSize = timeIndex.size();
+		List<LifeExpectancy> rows = new ArrayList<>();
+		for (Map.Entry<String, JsonNode> a : ageIndex.properties()) {
+			int age = a.getKey().equals("Y_GE85") ? MAX_AGE : Integer.parseInt(a.getKey().substring(1));
+			for (Map.Entry<String, JsonNode> t : timeIndex.properties()) {
+				JsonNode v = values.path(String.valueOf(a.getValue().asInt() * timeSize + t.getValue().asInt()));
+				if (v.isNumber()) {
+					rows.add(new LifeExpectancy(sex, age, Integer.parseInt(t.getKey()), v.asDouble()));
+				}
+			}
+		}
+		return rows;
 	}
 
 	/** Parses a JSON-stat 2.0 dataset where only the time dimension has more than one category. */

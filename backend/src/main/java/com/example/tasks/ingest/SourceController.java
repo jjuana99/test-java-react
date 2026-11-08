@@ -35,6 +35,13 @@ public class SourceController {
 			.toList();
 	}
 
+	/** Refreshes every scheduled source; called daily by Cloud Scheduler. */
+	@PostMapping("/ingest-scheduled")
+	@ResponseStatus(HttpStatus.ACCEPTED)
+	public List<IngestionRun> ingestScheduled() {
+		return ingestion.triggerScheduled();
+	}
+
 	@PostMapping("/{id}/ingest")
 	@ResponseStatus(HttpStatus.ACCEPTED)
 	public IngestionRun ingest(@PathVariable String id) {

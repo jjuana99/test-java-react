@@ -6,10 +6,14 @@ import MarketPage from './monitor/MarketPage'
 import Overview from './monitor/Overview'
 import RulesPage from './monitor/RulesPage'
 import SeriesPage from './monitor/SeriesPage'
+import RetirementPage from './retirement/RetirementPage'
+import { useSession } from './auth/session'
+import { logout } from './auth/firebase'
 import { listAlerts } from './monitor/api'
 import './App.css'
 
 const TABS = [
+  { id: 'plan', label: 'Mi jubilación' },
   { id: 'overview', label: 'Resumen' },
   { id: 'series', label: 'Series' },
   { id: 'alerts', label: 'Alertas' },
@@ -29,7 +33,7 @@ export interface Navigate {
 const readHash = (): { tab: TabId; id?: string } => {
   const [tab, id] = window.location.hash.slice(1).split('/')
   const known = TABS.find((t) => t.id === tab)
-  return { tab: known ? known.id : 'overview', id: id ? decodeURIComponent(id) : undefined }
+  return { tab: known ? known.id : 'plan', id: id ? decodeURIComponent(id) : undefined }
 }
 
 function App() {
@@ -50,6 +54,8 @@ function App() {
   useEffect(() => {
     refreshAlertCount()
   }, [route.tab])
+
+  const { user, admin } = useSession()
 
   const navigate: Navigate = (tab, params) => {
     window.location.assign(`#${params?.id ? `${tab}/${encodeURIComponent(params.id)}` : tab}`)
@@ -78,9 +84,26 @@ function App() {
             </button>
           ))}
         </nav>
+        <div className="account">
+          {user.photoURL ? (
+            <img src={user.photoURL} alt="" className="avatar" referrerPolicy="no-referrer" />
+          ) : (
+            <span className="avatar" aria-hidden="true">
+              {(user.displayName ?? user.email ?? '?').charAt(0).toUpperCase()}
+            </span>
+          )}
+          <div className="account-text">
+            <span className="small">{user.email}</span>
+            {admin && <span className="admin-badge">Administrador</span>}
+          </div>
+          <button className="secondary small-btn" onClick={() => logout()}>
+            Salir
+          </button>
+        </div>
       </header>
 
       <main className="content">
+        {route.tab === 'plan' && <RetirementPage />}
         {route.tab === 'overview' && <Overview navigate={navigate} />}
         {route.tab === 'series' && <SeriesPage selected={route.id} navigate={navigate} />}
         {route.tab === 'alerts' && <AlertsPage navigate={navigate} onChange={refreshAlertCount} />}

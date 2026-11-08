@@ -52,6 +52,16 @@
 		</dependency>
 
 		<dependency>
+			<groupId>com.nimbusds</groupId>
+			<artifactId>nimbus-jose-jwt</artifactId>
+			<version>10.9.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.pdfbox</groupId>
+			<artifactId>pdfbox</artifactId>
+			<version>3.0.7</version>
+		</dependency>
+		<dependency>
 			<groupId>org.duckdb</groupId>
 			<artifactId>duckdb_jdbc</artifactId>
 			<version>1.5.5.1</version>

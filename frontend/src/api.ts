@@ -1,3 +1,5 @@
+import { authFetch } from './auth/firebase'
+
 export interface Task {
   id: number
   title: string
@@ -6,7 +8,7 @@ export interface Task {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`/api/tasks${path}`, {
+  const res = await authFetch(`/api/tasks${path}`, {
     headers: { 'Content-Type': 'application/json' },
     ...init,
   })

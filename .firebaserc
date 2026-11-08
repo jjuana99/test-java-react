@@ -1,5 +1,7 @@
 {
   "projects": {
     "default": "react-java-test"
-  }
+  },
+  "targets": {},
+  "etags": {}
 }

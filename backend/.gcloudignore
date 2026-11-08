@@ -1,0 +1,8 @@
+# Local databases and build output never leave the machine
+data/
+target/
+*.duckdb
+*.duckdb.wal
+*.mv.db
+.idea/
+*.iml

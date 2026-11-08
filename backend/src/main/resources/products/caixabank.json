@@ -1,0 +1,150 @@
+{
+  "provider": "CaixaBank · VidaCaixa",
+  "verifiedOn": "2026-10-13",
+  "note": "Comisiones según las fichas mensuales con datos a 06/10/2026; rentabilidad a 12 meses del catálogo de planes (07/10/2025 a 07/10/2026).",
+  "products": [
+    {
+      "id": "cabk-destino",
+      "name": "CABK Destino (fecha objetivo)",
+      "type": "PENSION_PLAN",
+      "category": "LIFECYCLE",
+      "description": "Plan de pensiones de ciclo de vida: invierte más en renta variable al principio y reduce riesgo automáticamente al acercarse la fecha de jubilación elegida. Al llegar, 31 % renta variable, 66 % renta fija y 3 % alternativos.",
+      "variants": [
+        { "targetYear": 2030, "risk": 4, "managementFee": 1.50, "depositFee": 0.17, "return12m": 9.33 },
+        { "targetYear": 2035, "risk": 4, "managementFee": null, "depositFee": null, "return12m": 12.45 },
+        { "targetYear": 2040, "risk": 4, "managementFee": 1.50, "depositFee": 0.17, "return12m": 14.21 },
+        { "targetYear": 2050, "risk": 4, "managementFee": null, "depositFee": null, "return12m": 15.67 },
+        { "targetYear": 2060, "risk": 5, "managementFee": 1.50, "depositFee": 0.17, "return12m": 16.25 }
+      ],
+      "riskScale": 7,
+      "liquidity": "Solo en jubilación, contingencias o supuestos excepcionales (aportaciones con más de 10 años).",
+      "taxBenefit": "Reduce la base imponible del IRPF (hasta 1.500 €/año; 10.000 € con plan de empleo). Tributa como rendimiento del trabajo al cobrarlo.",
+      "url": "https://www.caixabank.es/aplnr/planes/catalogo.index_es.html"
+    },
+    {
+      "id": "cabk-jubilacion",
+      "name": "CABK Jubilación, PP",
+      "type": "PENSION_PLAN",
+      "category": "CONSERVATIVE_MIXED",
+      "description": "Plan de pensiones mixto conservador: como máximo un 8 % en renta variable y el resto en renta fija, depósitos y monetarios.",
+      "risk": 3,
+      "riskScale": 7,
+      "managementFee": 0.54,
+      "depositFee": 0.06,
+      "return12m": 0.64,
+      "liquidity": "Solo en jubilación, contingencias o supuestos excepcionales (aportaciones con más de 10 años).",
+      "taxBenefit": "Reduce la base imponible del IRPF (hasta 1.500 €/año; 10.000 € con plan de empleo). Tributa como rendimiento del trabajo al cobrarlo.",
+      "url": "https://www.caixabank.es/aplnr/planes/catalogo.index_es.html"
+    },
+    {
+      "id": "cabk-equilibrio",
+      "name": "CABK Equilibrio",
+      "type": "PENSION_PLAN",
+      "category": "MIXED",
+      "description": "Plan de pensiones de inversión mixta de riesgo medio.",
+      "risk": 3,
+      "riskScale": 7,
+      "managementFee": null,
+      "depositFee": null,
+      "return12m": 3.27,
+      "liquidity": "Solo en jubilación, contingencias o supuestos excepcionales.",
+      "taxBenefit": "Reduce la base imponible del IRPF (hasta 1.500 €/año).",
+      "url": "https://www.caixabank.es/aplnr/planes/catalogo.index_es.html"
+    },
+    {
+      "id": "cabk-crecimiento",
+      "name": "CABK Crecimiento",
+      "type": "PENSION_PLAN",
+      "category": "MIXED",
+      "description": "Plan de pensiones de inversión mixta con más peso en renta variable.",
+      "risk": 4,
+      "riskScale": 7,
+      "managementFee": null,
+      "depositFee": null,
+      "return12m": 6.76,
+      "liquidity": "Solo en jubilación, contingencias o supuestos excepcionales.",
+      "taxBenefit": "Reduce la base imponible del IRPF (hasta 1.500 €/año).",
+      "url": "https://www.caixabank.es/aplnr/planes/catalogo.index_es.html"
+    },
+    {
+      "id": "cabk-monetario",
+      "name": "CABK Monetario",
+      "type": "PENSION_PLAN",
+      "category": "MONEY_MARKET",
+      "description": "Plan de pensiones de renta fija a corto plazo, de muy baja volatilidad.",
+      "risk": 2,
+      "riskScale": 7,
+      "managementFee": null,
+      "depositFee": null,
+      "return12m": 1.57,
+      "liquidity": "Solo en jubilación, contingencias o supuestos excepcionales.",
+      "taxBenefit": "Reduce la base imponible del IRPF (hasta 1.500 €/año).",
+      "url": "https://www.caixabank.es/aplnr/planes/catalogo.index_es.html"
+    },
+    {
+      "id": "mybox-jubilacion",
+      "name": "MyBox Jubilación",
+      "type": "PACK",
+      "category": "PACK",
+      "description": "Tres productos en uno: plan de pensiones CABK Destino, seguro de ahorro Unit Linked CABK Destino (rescatable a valor de mercado, sin rentabilidad garantizada) y seguro de vida para fallecimiento e invalidez absoluta y permanente. Cada 3 años devuelve un 20 % de las primas de vida como premio de fidelización.",
+      "risk": null,
+      "riskScale": 7,
+      "managementFee": null,
+      "depositFee": null,
+      "lifeCover": true,
+      "liquidity": "La parte Unit Linked se puede rescatar en cualquier momento a valor de mercado; la parte de plan de pensiones, solo en jubilación o supuestos excepcionales.",
+      "taxBenefit": "La parte de plan de pensiones reduce la base del IRPF como cualquier plan.",
+      "url": "https://www.caixabank.es/particular/seguros/mybox-jubilacion.html"
+    },
+    {
+      "id": "caixafuturo",
+      "name": "CaixaFuturo (seguro de ahorro)",
+      "type": "SAVINGS_INSURANCE",
+      "category": "GUARANTEED",
+      "description": "Seguro de ahorro a 10 años con aportaciones desde 50 €/mes (máximo 10.000 €/año). Interés técnico garantizado del 0,50 % durante 12 meses y un mínimo del 0,05 % hasta el vencimiento. VidaCaixa lo comercializa como 'Cuenta Caixafuturo - PIAS'.",
+      "risk": 1,
+      "riskScale": 6,
+      "guaranteedRate": 0.50,
+      "minimumRate": 0.05,
+      "minMonthly": 50,
+      "maxAnnual": 10000,
+      "liquidity": "Rescate total o parcial en cualquier momento, sin penalización.",
+      "taxBenefit": "Como PIAS, la rentabilidad queda exenta si tras 5 años se cobra en forma de renta vitalicia (confírmalo con la entidad al contratar).",
+      "url": "https://www.caixabank.es/particular/seguros/caixafuturo.html"
+    },
+    {
+      "id": "cabk-ahorro-garantizado",
+      "name": "CABK Ahorro Garantizado",
+      "type": "GUARANTEED_SAVINGS",
+      "category": "GUARANTEED",
+      "description": "Seguro de ahorro de prima única (25.000 € a 250.000 €) con interés garantizado del 1 % (Plus) o 1,5 % (Premium, desde 50.000 €) los primeros 12 meses y un mínimo del 0,05 %. Plazo inicial de 3 años con renovaciones anuales.",
+      "risk": 1,
+      "riskScale": 6,
+      "guaranteedRate": 1.0,
+      "minimumRate": 0.05,
+      "minPremium": 25000,
+      "liquidity": "Rescate solo total; antes de 3 años se pierde el 50 % de las ganancias.",
+      "taxBenefit": "Sin ventaja fiscal específica en IRPF.",
+      "url": "https://www.caixabank.es/particular/seguros/cabk-ahorro-garantizado.html"
+    },
+    {
+      "id": "renta-vitalicia",
+      "name": "Renta vitalicia VidaCaixa",
+      "type": "ANNUITY",
+      "category": "ANNUITY",
+      "description": "Convierte un capital en una renta mensual garantizada de por vida (también para dos titulares). Prima única mínima de 20.000 €.",
+      "risk": null,
+      "riskScale": 6,
+      "minPremium": 20000,
+      "liquidity": "Depende de la modalidad; la renta es para toda la vida.",
+      "taxBenefit": "Solo tributa una parte de la renta, menor cuanto mayor es la edad al empezar a cobrarla.",
+      "url": "https://www.vidacaixa.es/en/life-annuity"
+    }
+  ],
+  "unavailable": [
+    {
+      "name": "SIALP (Cuenta Caixafuturo - SIALP)",
+      "reason": "Su página de producto en caixabank.es ya no está disponible (13/10/2026); no se incluye hasta confirmar que se sigue comercializando."
+    }
+  ]
+}

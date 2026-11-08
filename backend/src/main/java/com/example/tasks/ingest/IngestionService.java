@@ -7,6 +7,7 @@ import com.example.tasks.warehouse.Point;
 import com.example.tasks.warehouse.Warehouse;
 import jakarta.annotation.PreDestroy;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -87,6 +88,22 @@ public class IngestionService implements ApplicationRunner {
 		return run;
 	}
 
+	/** Queues every connector refreshed automatically; sources already running are skipped. */
+	public List<IngestionRun> triggerScheduled() {
+		List<IngestionRun> started = new ArrayList<>();
+		for (DataConnector connector : connectors()) {
+			if (connector.scheduled()) {
+				try {
+					started.add(trigger(connector.id()));
+				}
+				catch (ResponseStatusException e) {
+					log.info("Se omite {}: {}", connector.id(), e.getReason());
+				}
+			}
+		}
+		return started;
+	}
+
 	IngestionRun begin(String source) {
 		return runs.save(new IngestionRun(source));
 	}
@@ -102,6 +119,12 @@ public class IngestionService implements ApplicationRunner {
 			finish(runId, run -> run.succeed(infos.size(), alerts));
 			log.info("Ingesta {} completada: {} series, {} alertas en {} ms", connector.id(), infos.size(), alerts,
 					System.currentTimeMillis() - start);
+			try {
+				warehouse.snapshot();
+			}
+			catch (RuntimeException e) {
+				log.warn("No se pudo guardar la copia del almacén tras la ingesta {}", connector.id(), e);
+			}
 		}
 		catch (Exception e) {
 			log.warn("Ingesta {} fallida", connector.id(), e);

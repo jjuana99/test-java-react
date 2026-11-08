@@ -1,6 +1,11 @@
 package com.example.tasks.warehouse;
 
 import jakarta.annotation.PreDestroy;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.DriverManager;
@@ -13,6 +18,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import org.duckdb.DuckDBConnection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -38,9 +46,32 @@ public class Warehouse {
 
 	}
 
+	private static final Logger log = LoggerFactory.getLogger(Warehouse.class);
+
 	private final DuckDBConnection root;
 
-	public Warehouse(@Value("${app.warehouse.url:jdbc:duckdb:}") String url) throws SQLException {
+	/** Local database file, or null for an in-memory database. */
+	private final Path localFile;
+
+	/** Durable copy (e.g. a Cloud Storage mount), or null when not configured. */
+	private final Path snapshot;
+
+	public Warehouse(String url) throws SQLException {
+		this(url, "");
+	}
+
+	/**
+	 * With {@code snapshot} set, the database runs on a local file (fast, supports DuckDB's
+	 * random writes) restored from the snapshot at startup and copied back by
+	 * {@link #snapshot()}. Used where the local disk is ephemeral, like Cloud Run.
+	 */
+	@Autowired
+	public Warehouse(@Value("${app.warehouse.url:jdbc:duckdb:}") String url,
+			@Value("${app.warehouse.snapshot:}") String snapshot) throws SQLException {
+		String file = url.substring("jdbc:duckdb:".length());
+		this.localFile = file.isBlank() ? null : Path.of(file);
+		this.snapshot = snapshot.isBlank() ? null : Path.of(snapshot);
+		restore();
 		this.root = (DuckDBConnection) DriverManager.getConnection(url);
 		execute("""
 				CREATE TABLE IF NOT EXISTS points (
@@ -48,6 +79,70 @@ public class Warehouse {
 					date DATE NOT NULL,
 					value DOUBLE NOT NULL
 				)""");
+	}
+
+	private void restore() {
+		if (localFile == null) {
+			return;
+		}
+		try {
+			Files.createDirectories(localFile.toAbsolutePath().getParent());
+			if (snapshot == null || Files.exists(localFile) || !Files.exists(snapshot)) {
+				return;
+			}
+			Files.copy(snapshot, localFile);
+			log.info("Almacén restaurado desde {} ({} MB)", snapshot, Files.size(localFile) / 1_000_000);
+		}
+		catch (IOException e) {
+			throw new UncheckedIOException("No se pudo restaurar el almacén desde " + snapshot, e);
+		}
+	}
+
+	/**
+	 * Has DuckDB write a consistent copy of the database to a new local file (the open file
+	 * may be locked) and then moves that closed file to the snapshot location.
+	 */
+	public synchronized void snapshot() {
+		if (snapshot == null || localFile == null) {
+			return;
+		}
+		if (tableExists("census_sections")) {
+			loadSpatial(); // GEOMETRY columns need the extension to be copied
+		}
+		Path copy = localFile.toAbsolutePath().resolveSibling("snapshot-copy.duckdb");
+		try {
+			Files.deleteIfExists(copy);
+			String current = query("SELECT current_database()", rs -> rs.getString(1)).getFirst();
+			autoCommit("ATTACH '%s' AS snap".formatted(copy.toString().replace('\\', '/').replace("'", "''")),
+					"COPY FROM DATABASE \"%s\" TO snap".formatted(current.replace("\"", "\"\"")), "DETACH snap");
+			Path tmp = snapshot.resolveSibling(snapshot.getFileName() + ".tmp");
+			Files.copy(copy, tmp, StandardCopyOption.REPLACE_EXISTING);
+			Files.move(tmp, snapshot, StandardCopyOption.REPLACE_EXISTING);
+			log.info("Copia del almacén guardada en {} ({} MB)", snapshot, Files.size(snapshot) / 1_000_000);
+		}
+		catch (IOException e) {
+			throw new UncheckedIOException("No se pudo guardar la copia del almacén en " + snapshot, e);
+		}
+		finally {
+			try {
+				Files.deleteIfExists(copy);
+			}
+			catch (IOException e) {
+				log.warn("No se pudo borrar {}", copy, e);
+			}
+		}
+	}
+
+	/** Statements that cannot run inside a transaction, such as ATTACH. */
+	private void autoCommit(String... statements) {
+		try (Connection c = root.duplicate(); Statement st = c.createStatement()) {
+			for (String sql : statements) {
+				st.execute(sql);
+			}
+		}
+		catch (SQLException e) {
+			throw new WarehouseException(e);
+		}
 	}
 
 	@PreDestroy
